@@ -1,6 +1,7 @@
 //
 //  CSV
 //  Modified by Mark Price on 08/14/15
+//  Modified by Leon Silcott on 26/09/17
 //
 
 import Foundation
@@ -9,15 +10,15 @@ public class CSV {
     public var headers: [String] = []
     public var rows: [Dictionary<String, String>] = []
     public var columns = Dictionary<String, [String]>()
-    var delimiter = NSCharacterSet(charactersInString: ",")
+    var delimiter = NSCharacterSet(charactersIn: ",")
     
     public init(content: String?, delimiter: NSCharacterSet, encoding: UInt) throws{
         if let csvStringToParse = content{
             self.delimiter = delimiter
 
-            let newline = NSCharacterSet.newlineCharacterSet()
+            let newline = CharacterSet.newlines
             var lines: [String] = []
-            csvStringToParse.stringByTrimmingCharactersInSet(newline).enumerateLines { line, stop in lines.append(line) }
+            csvStringToParse.trimmingCharacters(in: newline).enumerateLines { line, stop in lines.append(line) }
 
             self.headers = self.parseHeaders(fromLines: lines)
             self.rows = self.parseRows(fromLines: lines)
@@ -26,32 +27,32 @@ public class CSV {
     }
     
     public convenience init(contentsOfURL url: String) throws {
-        let comma = NSCharacterSet(charactersInString: ",")
+        let comma = NSCharacterSet(charactersIn: ",")
         let csvString: String?
         do {
-            csvString = try String(contentsOfFile: url, encoding: NSUTF8StringEncoding)
+            csvString = try String(contentsOfFile: url, encoding: String.Encoding.utf8)
         } catch _ {
             csvString = nil
         };
-        try self.init(content: csvString,delimiter:comma, encoding:NSUTF8StringEncoding)
+        try self.init(content: csvString,delimiter:comma as NSCharacterSet, encoding:String.Encoding.utf8.rawValue)
     }
     
     
     func parseHeaders(fromLines lines: [String]) -> [String] {
-        return lines[0].componentsSeparatedByCharactersInSet(self.delimiter)
+        return lines[0].components(separatedBy: self.delimiter as CharacterSet)
     }
     
     func parseRows(fromLines lines: [String]) -> [Dictionary<String, String>] {
         var rows: [Dictionary<String, String>] = []
         
-        for (lineNumber, line) in lines.enumerate() {
+        for (lineNumber, line) in lines.enumerated() {
             if lineNumber == 0 {
                 continue
             }
             
             var row = Dictionary<String, String>()
-            let values = line.componentsSeparatedByCharactersInSet(self.delimiter)
-            for (index, header) in self.headers.enumerate() {
+            let values = line.components(separatedBy: self.delimiter as CharacterSet)
+            for (index, header) in self.headers.enumerated() {
                 if index < values.count {
                     row[header] = values[index]
                 } else {
